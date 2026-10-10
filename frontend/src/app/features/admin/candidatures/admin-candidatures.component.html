@@ -1,0 +1,162 @@
+<div>
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900">Gestion des Candidatures & Vérification</h1>
+      <p class="text-xs sm:text-sm text-slate-500 mt-1">Consultez les pièces justificatives des candidats, validez ou rejetez les dossiers.</p>
+    </div>
+  </div>
+
+  @if (successMessage) {
+    <div class="alert alert-success mb-6">
+      <span>✅</span>
+      <span>{{ successMessage }}</span>
+    </div>
+  }
+
+  @if (errorMessage) {
+    <div class="alert alert-danger mb-6">
+      <span>⚠️</span>
+      <span>{{ errorMessage }}</span>
+    </div>
+  }
+
+  <!-- Filters -->
+  <div class="card p-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="form-group mb-0">
+        <label class="form-label">Filtrer par Concours</label>
+        <select [(ngModel)]="selectedConcoursId" (change)="loadCandidatures()" class="form-select">
+          <option value="">Tous les concours</option>
+          @for (c of concoursList; track c.id) {
+            <option [value]="c.id">{{ c.titre }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-group mb-0">
+        <label class="form-label">Filtrer par Statut de Dossier</label>
+        <select [(ngModel)]="selectedStatut" (change)="loadCandidatures()" class="form-select">
+          <option value="">Tous les statuts</option>
+          <option value="EN_ATTENTE">En Attente de Vérification</option>
+          <option value="DOSSIER_COMPLET">Dossier Validé / Complet</option>
+          <option value="REJETE">Dossier Rejeté</option>
+          <option value="EN_DELIBERATION">En Délibération</option>
+          <option value="DELIBERE">Délibéré / Résultats Prêts</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="py-16 text-center">
+      <div class="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+      <p class="text-sm text-slate-500 font-medium">Chargement des dossiers...</p>
+    </div>
+  } @else {
+    <div class="card overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 text-slate-600 uppercase text-[10px] font-bold border-b border-slate-200">
+            <tr>
+              <th class="py-3.5 px-4 w-20">N° Dossier</th>
+              <th class="py-3.5 px-4">Candidat</th>
+              <th class="py-3.5 px-4">Concours</th>
+              <th class="py-3.5 px-4">Pièces Justificatives</th>
+              <th class="py-3.5 px-4">Statut</th>
+              <th class="py-3.5 px-4">Date Soumission</th>
+              <th class="py-3.5 px-4 text-right">Décision Dossier</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            @for (cand of candidatures; track cand.id) {
+              <tr class="hover:bg-slate-50/50">
+                <td class="py-3.5 px-4 font-mono font-bold text-slate-400">#{{ cand.id }}</td>
+                <td class="py-3.5 px-4">
+                  <div class="font-bold text-slate-900 text-sm">{{ cand.candidatNom }} {{ cand.candidatPrenom }}</div>
+                  <div class="text-[11px] text-slate-400">{{ cand.candidatEmail }} • {{ cand.candidatTelephone || 'Pas de tél' }}</div>
+                </td>
+                <td class="py-3.5 px-4 text-slate-600 max-w-xs truncate">{{ cand.concoursTitre }}</td>
+                <td class="py-3.5 px-4">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <a [href]="'http://localhost:8080' + cand.cvUrl" target="_blank" class="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-700 hover:bg-emerald-50 hover:text-opti-primary font-medium" title="Voir CV">
+                      📄 CV
+                    </a>
+                    <a [href]="'http://localhost:8080' + cand.diplomeUrl" target="_blank" class="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-700 hover:bg-emerald-50 hover:text-opti-primary font-medium" title="Voir Diplôme">
+                      🎓 Diplôme
+                    </a>
+                    <a [href]="'http://localhost:8080' + cand.photoUrl" target="_blank" class="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-700 hover:bg-emerald-50 hover:text-opti-primary font-medium" title="Voir Photo">
+                      🖼️ Photo
+                    </a>
+                  </div>
+                </td>
+                <td class="py-3.5 px-4">
+                  <app-status-badge [status]="cand.statut" type="candidature"></app-status-badge>
+                  @if (cand.motifRejet) {
+                    <div class="text-[11px] text-rose-600 font-medium mt-1">
+                      Motif: {{ cand.motifRejet }}
+                    </div>
+                  }
+                </td>
+                <td class="py-3.5 px-4 text-slate-500">
+                  {{ cand.dateSoumission | date:'dd/MM/yyyy HH:mm' }}
+                </td>
+                <td class="py-3.5 px-4 text-right">
+                  <div class="flex items-center justify-end gap-2">
+                    @if (cand.statut !== 'DOSSIER_COMPLET' && cand.statut !== 'DELIBERE') {
+                      <button (click)="validerDossier(cand)" class="btn btn-primary btn-sm" title="Valider le dossier">
+                        ✓ Valider
+                      </button>
+                    }
+                    @if (cand.statut !== 'REJETE') {
+                      <button (click)="openRejectModal(cand)" class="btn btn-danger btn-sm" title="Rejeter le dossier">
+                        ✕ Rejeter
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="py-12 text-center text-slate-500 text-sm">
+                  Aucune candidature ne correspond aux critères de filtre.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- Reject Modal -->
+  @if (showRejectModal) {
+    <div class="modal-backdrop">
+      <div class="modal-content max-w-md">
+        <div class="card-header bg-slate-50/50">
+          <h3 class="font-bold text-rose-600 text-base">Rejeter le Dossier #{{ selectedCandidature?.id }}</h3>
+          <button (click)="showRejectModal = false" class="btn btn-outline btn-sm p-1.5 leading-none">✕</button>
+        </div>
+
+        <div class="p-6">
+          <p class="text-xs text-slate-600 mb-4">
+            Veuillez préciser le motif de rejet notifié à
+            <strong>{{ selectedCandidature?.candidatNom }} {{ selectedCandidature?.candidatPrenom }}</strong> :
+          </p>
+
+          <div class="form-group mb-4">
+            <label class="form-label">Motif du Rejet <span class="text-rose-500">*</span></label>
+            <textarea [(ngModel)]="rejectReason" rows="3" class="form-textarea" required placeholder="ex: Pièce d'identité illisible ou diplôme non conforme..."></textarea>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+            <button (click)="showRejectModal = false" type="button" class="btn btn-outline">Annuler</button>
+            <button (click)="confirmReject()" type="button" class="btn btn-danger">
+              Confirmer le Rejet
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

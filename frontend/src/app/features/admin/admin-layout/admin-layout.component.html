@@ -1,0 +1,131 @@
+<div class="flex min-h-[calc(100vh-4rem)]">
+  <!-- Admin Sidebar -->
+  <aside class="w-64 bg-[#181825]/85 backdrop-blur-xl text-slate-300 flex-shrink-0 flex flex-col justify-between border-r border-white/10 shadow-glass relative z-20">
+    <div>
+      <!-- Sidebar Header -->
+      <div class="p-5 border-b border-white/10 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-opti-primary to-opti-accent text-[#1e1e2e] font-black text-sm flex items-center justify-center shadow-lg shadow-opti-primary/20">
+          SX
+        </div>
+        <div>
+          <div class="font-extrabold text-white text-base leading-tight">Sunu<span class="bg-gradient-to-r from-opti-primary to-opti-accent bg-clip-text text-transparent">Admin</span></div>
+          <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-opti-primary/15 text-opti-primary border border-opti-primary/30">
+            Backoffice
+          </span>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="p-4 space-y-6 text-sm">
+        <div>
+          <div class="px-3 mb-2 text-[10px] font-bold tracking-widest text-slate-400 uppercase">Général</div>
+          <a
+            routerLink="/admin/dashboard"
+            routerLinkActive="bg-opti-primary/20 text-opti-primary font-bold border border-opti-primary/35 shadow-sm"
+            class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-white/[0.06] hover:text-white transition-all"
+          >
+            <span class="text-base">📊</span> Tableau de bord
+          </a>
+        </div>
+
+        <div>
+          <div class="px-3 mb-2 text-[10px] font-bold tracking-widest text-slate-400 uppercase">Gestion Concours</div>
+          <div class="space-y-1.5">
+            <a
+              routerLink="/admin/concours"
+              routerLinkActive="bg-opti-primary/20 text-opti-primary font-bold border border-opti-primary/35 shadow-sm"
+              class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-white/[0.06] hover:text-white transition-all"
+            >
+              <span class="text-base">🏆</span> Concours & Épreuves
+            </a>
+            <a
+              routerLink="/admin/candidatures"
+              routerLinkActive="bg-opti-primary/20 text-opti-primary font-bold border border-opti-primary/35 shadow-sm"
+              class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-white/[0.06] hover:text-white transition-all"
+            >
+              <span class="text-base">📝</span> Dossiers Candidatures
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <div class="px-3 mb-2 text-[10px] font-bold tracking-widest text-slate-400 uppercase">Examens & Délibération</div>
+          <div class="space-y-1.5">
+            <a
+              routerLink="/admin/notes"
+              routerLinkActive="bg-opti-primary/20 text-opti-primary font-bold border border-opti-primary/35 shadow-sm"
+              class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-white/[0.06] hover:text-white transition-all"
+            >
+              <span class="text-base">✍️</span> Saisie des Notes
+            </a>
+            <a
+              routerLink="/admin/deliberation"
+              routerLinkActive="bg-opti-primary/20 text-opti-primary font-bold border border-opti-primary/35 shadow-sm"
+              class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-white/[0.06] hover:text-white transition-all"
+            >
+              <span class="text-base">⚖️</span> Délibération & PV
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <div class="px-3 mb-2 text-[10px] font-bold tracking-widest text-slate-400 uppercase">Système</div>
+          <div class="space-y-1.5">
+            <a
+              routerLink="/admin/users"
+              routerLinkActive="bg-opti-primary/20 text-opti-primary font-bold border border-opti-primary/35 shadow-sm"
+              class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-white/[0.06] hover:text-white transition-all"
+            >
+              <span class="text-base">👥</span> Utilisateurs & Admins
+            </a>
+            <a
+              routerLink="/"
+              class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-opti-accent hover:bg-opti-accent/10 hover:text-sky-300 transition-all"
+            >
+              <span class="text-base">🌐</span> Voir Portail Public
+            </a>
+          </div>
+        </div>
+      </nav>
+    </div>
+
+    <!-- Sidebar Footer -->
+    <div class="p-4 border-t border-white/10 bg-white/[0.02]">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-8 h-8 rounded-full bg-amber-500/20 text-amber-300 font-bold text-xs flex items-center justify-center border border-amber-500/40">
+          AD
+        </div>
+        <div class="overflow-hidden">
+          <div class="font-bold text-xs text-white truncate">
+            {{ authService.currentUser()?.prenom }} {{ authService.currentUser()?.nom }}
+          </div>
+          <div class="text-[10px] text-slate-400">Administrateur Système</div>
+        </div>
+      </div>
+      <button (click)="logout()" class="btn btn-outline btn-sm w-full border-white/15 text-slate-300 hover:text-rose-400 hover:border-rose-400/40">
+        Se déconnecter
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <div class="flex-1 flex flex-col min-w-0">
+    <!-- Topbar -->
+    <div class="h-14 bg-[#181825]/60 backdrop-blur-xl border-b border-white/10 px-6 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+          Plateforme Sécurisée
+        </span>
+        <span class="text-xs text-slate-400 hidden sm:inline">Session active • Spring Security JWT</span>
+      </div>
+      <div class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+        <span>🇸🇳</span> République du Sénégal
+      </div>
+    </div>
+
+    <!-- Admin Views Outlet -->
+    <div class="p-6 md:p-8 flex-1 max-w-7xl w-full mx-auto">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>

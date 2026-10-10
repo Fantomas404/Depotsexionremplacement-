@@ -1,0 +1,193 @@
+<div>
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900">Gestion des Concours & Épreuves</h1>
+      <p class="text-xs sm:text-sm text-slate-500 mt-1">Créez, configurez et planifiez les sessions de concours nationaux.</p>
+    </div>
+    <button (click)="openCreateModal()" class="btn btn-primary shadow-sm">
+      ➕ Nouveau Concours
+    </button>
+  </div>
+
+  @if (successMessage) {
+    <div class="alert alert-success mb-6">
+      <span>✅</span>
+      <span>{{ successMessage }}</span>
+    </div>
+  }
+
+  @if (errorMessage) {
+    <div class="alert alert-danger mb-6">
+      <span>⚠️</span>
+      <span>{{ errorMessage }}</span>
+    </div>
+  }
+
+  @if (loading) {
+    <div class="py-16 text-center">
+      <div class="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+      <p class="text-sm text-slate-500 font-medium">Chargement des concours...</p>
+    </div>
+  } @else {
+    <div class="card overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 text-slate-600 uppercase text-[10px] font-bold border-b border-slate-200">
+            <tr>
+              <th class="py-3.5 px-4 w-16">ID</th>
+              <th class="py-3.5 px-4">Titre du Concours</th>
+              <th class="py-3.5 px-4">Période d'Inscription</th>
+              <th class="py-3.5 px-4 text-center">Places</th>
+              <th class="py-3.5 px-4">Épreuves</th>
+              <th class="py-3.5 px-4">Statut Actuel</th>
+              <th class="py-3.5 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            @for (c of concoursList; track c.id) {
+              <tr class="hover:bg-slate-50/50">
+                <td class="py-3.5 px-4 font-mono font-bold text-slate-400">#{{ c.id }}</td>
+                <td class="py-3.5 px-4">
+                  <div class="font-bold text-slate-900 text-sm">{{ c.titre }}</div>
+                  <span class="text-[11px] text-slate-400">{{ c.nombreCandidats }} candidature(s) enregistrée(s)</span>
+                </td>
+                <td class="py-3.5 px-4 text-slate-600">
+                  <div>Du {{ c.dateDebut | date:'dd/MM/yyyy' }}</div>
+                  <div class="text-rose-600 font-bold">Au {{ c.dateFin | date:'dd/MM/yyyy' }}</div>
+                </td>
+                <td class="py-3.5 px-4 text-center">
+                  <span class="font-bold text-opti-primary text-sm">{{ c.placesDisponibles }}</span>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold text-[11px]">
+                    {{ c.epreuves?.length || 0 }} épr. (Coef: {{ c.totalCoefficients }})
+                  </span>
+                </td>
+                <td class="py-3.5 px-4">
+                  <select [value]="c.statut" (change)="updateStatut(c, $event)" class="form-select text-xs py-1 px-2 font-semibold">
+                    <option value="BROUILLON">BROUILLON</option>
+                    <option value="OUVERT">OUVERT</option>
+                    <option value="CLOTURE">CLOTURE</option>
+                    <option value="EN_DELIBERATION">EN_DELIBERATION</option>
+                    <option value="PUBLIE">PUBLIE</option>
+                  </select>
+                </td>
+                <td class="py-3.5 px-4 text-right">
+                  <div class="flex items-center justify-end gap-2">
+                    <button (click)="openEditModal(c)" class="btn btn-outline btn-sm" title="Modifier">
+                      ✏️ Modifier
+                    </button>
+                    <button (click)="deleteConcours(c)" class="btn btn-danger btn-sm" title="Supprimer">
+                      🗑️
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- Create / Edit Modal -->
+  @if (showModal) {
+    <div class="modal-backdrop">
+      <div class="modal-content">
+        <div class="card-header bg-slate-50/50">
+          <h3 class="font-bold text-slate-900 text-base">{{ editMode ? 'Modifier le Concours' : 'Créer un Nouveau Concours' }}</h3>
+          <button (click)="closeModal()" class="btn btn-outline btn-sm p-1.5 leading-none">✕</button>
+        </div>
+
+        <div class="p-6">
+          @if (errorMessage) {
+            <div class="alert alert-danger mb-4 text-xs">
+              <span>⚠️</span>
+              <span>{{ errorMessage }}</span>
+            </div>
+          }
+
+          <form (ngSubmit)="saveConcours()" class="space-y-4">
+            <div class="form-group mb-0">
+              <label class="form-label">Titre du Concours <span class="text-rose-500">*</span></label>
+              <input type="text" [(ngModel)]="form.titre" name="titre" required class="form-input" placeholder="ex: Concours Direct d'Entrée à l'ENA..." />
+            </div>
+
+            <div class="form-group mb-0">
+              <label class="form-label">Description</label>
+              <textarea [(ngModel)]="form.description" name="description" rows="2" class="form-textarea" placeholder="Brève présentation..."></textarea>
+            </div>
+
+            <div class="form-group mb-0">
+              <label class="form-label">Conditions & Critères d'Éligibilité</label>
+              <textarea [(ngModel)]="form.conditions" name="conditions" rows="2" class="form-textarea" placeholder="Diplôme requis, âge limite, nationalité..."></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="form-group mb-0">
+                <label class="form-label">Date Début <span class="text-rose-500">*</span></label>
+                <input type="date" [(ngModel)]="form.dateDebut" name="dateDebut" required class="form-input" />
+              </div>
+              <div class="form-group mb-0">
+                <label class="form-label">Date Limite <span class="text-rose-500">*</span></label>
+                <input type="date" [(ngModel)]="form.dateFin" name="dateFin" required class="form-input" />
+              </div>
+              <div class="form-group mb-0">
+                <label class="form-label">Délibération</label>
+                <input type="date" [(ngModel)]="form.dateDeliberation" name="dateDeliberation" class="form-input" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="form-group mb-0">
+                <label class="form-label">Places (Quota) <span class="text-rose-500">*</span></label>
+                <input type="number" [(ngModel)]="form.placesDisponibles" name="placesDisponibles" min="1" required class="form-input" />
+              </div>
+              <div class="form-group mb-0">
+                <label class="form-label">Statut Initial</label>
+                <select [(ngModel)]="form.statut" name="statut" class="form-select">
+                  <option value="BROUILLON">BROUILLON</option>
+                  <option value="OUVERT">OUVERT</option>
+                  <option value="CLOTURE">CLOTURE</option>
+                  <option value="EN_DELIBERATION">EN_DELIBERATION</option>
+                  <option value="PUBLIE">PUBLIE</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Dynamic Epreuves -->
+            <div class="pt-4 border-t border-slate-100">
+              <div class="flex items-center justify-between mb-3">
+                <label class="form-label mb-0">Épreuves du Concours & Coefficients <span class="text-rose-500">*</span></label>
+                <button (click)="addEpreuve()" type="button" class="btn btn-outline-primary btn-sm">
+                  ➕ Ajouter épreuve
+                </button>
+              </div>
+
+              <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                @for (epr of form.epreuves; track $index; let i = $index) {
+                  <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 grid grid-cols-3 gap-2 items-center">
+                    <input type="text" [(ngModel)]="epr.intitule" [name]="'epr_titre_' + i" placeholder="Intitulé épreuve" required class="form-input text-xs" />
+                    <input type="number" [(ngModel)]="epr.coefficient" [name]="'epr_coef_' + i" placeholder="Coef" min="0.1" step="0.5" required class="form-input text-xs" />
+                    <div class="flex items-center gap-2">
+                      <input type="number" [(ngModel)]="epr.dureeMinutes" [name]="'epr_duree_' + i" placeholder="Min" min="15" required class="form-input text-xs" />
+                      <button (click)="removeEpreuve(i)" type="button" class="btn btn-danger btn-sm px-2" title="Supprimer">✕</button>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+              <button (click)="closeModal()" type="button" class="btn btn-outline">Annuler</button>
+              <button type="submit" [disabled]="saving" class="btn btn-primary">
+                {{ saving ? 'Enregistrement...' : 'Enregistrer le Concours' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+</div>

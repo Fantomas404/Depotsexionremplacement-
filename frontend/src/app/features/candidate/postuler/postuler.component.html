@@ -1,0 +1,274 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+  <div class="mb-8">
+    <a routerLink="/concours" class="inline-flex items-center gap-2 text-sm font-semibold text-opti-primary hover:text-emerald-800 transition mb-2">
+      &larr; Retour au catalogue
+    </a>
+    <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">Dépôt de Candidature</h1>
+    <p class="text-xs sm:text-sm text-slate-500 mt-1 dark:text-slate-400">Suivez les étapes pour soumettre votre dossier en toute sécurité.</p>
+  </div>
+
+  @if (successMessage()) {
+    <div class="alert alert-success mb-6">
+      <span>✅</span>
+      <span>{{ successMessage() }}</span>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="alert alert-danger mb-6 animate-fadeIn">
+      <span>⚠️</span>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <!-- Wizard Main Content -->
+    <div class="lg:col-span-2">
+      <!-- Stepper Nav -->
+      <div class="mb-8">
+        <div class="flex items-center justify-between relative">
+          <div class="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-full z-0"></div>
+          <div class="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-opti-accent rounded-full z-0 transition-all duration-500"
+               [style.width]="((currentStep() - 1) / 2) * 100 + '%'"></div>
+
+          <!-- Step 1 -->
+          <div class="relative z-10 flex flex-col items-center">
+            <button (click)="setStep(1)"
+                    class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 border-4"
+                    [class]="currentStep() >= 1 ? 'bg-opti-accent border-opti-primaryLight text-white' : 'bg-white border-slate-200 text-slate-400'">
+              1
+            </button>
+            <span class="text-xs font-semibold mt-2" [class]="currentStep() >= 1 ? 'text-opti-accent' : 'text-slate-400'">Choix</span>
+          </div>
+          
+          <!-- Step 2 -->
+          <div class="relative z-10 flex flex-col items-center">
+            <button (click)="setStep(2)"
+                    [disabled]="!canProceedToStep2()"
+                    class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 border-4"
+                    [class.cursor-not-allowed]="!canProceedToStep2()"
+                    [class]="currentStep() >= 2 ? 'bg-opti-accent border-opti-primaryLight text-white' : 'bg-white border-slate-200 text-slate-400'">
+              2
+            </button>
+            <span class="text-xs font-semibold mt-2" [class]="currentStep() >= 2 ? 'text-opti-accent' : 'text-slate-400'">Pièces</span>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="relative z-10 flex flex-col items-center">
+            <button (click)="setStep(3)"
+                    [disabled]="!canProceedToStep3()"
+                    class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 border-4"
+                    [class.cursor-not-allowed]="!canProceedToStep3()"
+                    [class]="currentStep() >= 3 ? 'bg-opti-accent border-opti-primaryLight text-white' : 'bg-white border-slate-200 text-slate-400'">
+              3
+            </button>
+            <span class="text-xs font-semibold mt-2" [class]="currentStep() >= 3 ? 'text-opti-accent' : 'text-slate-400'">Validation</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step Content Container -->
+      <div class="card p-6 sm:p-8 min-h-[400px] flex flex-col">
+        
+        <!-- STEP 1: Choix du Concours -->
+        @if (currentStep() === 1) {
+          <div class="flex-grow animate-fadeIn">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">Sélectionnez le concours</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Choisissez la session de concours à laquelle vous souhaitez postuler.</p>
+            
+            <div class="form-group mb-0">
+              <label class="form-label">Concours ciblé <span class="text-rose-500">*</span></label>
+              <select
+                [value]="selectedConcoursId() || ''"
+                (change)="onConcoursSelect($event)"
+                class="form-select"
+              >
+                <option value="" disabled>-- Choisir un concours --</option>
+                @for (c of concoursList(); track c.id) {
+                  <option [value]="c.id">
+                    {{ c.titre }} (Clôture : {{ c.dateFin | date:'dd/MM/yyyy' }})
+                  </option>
+                }
+              </select>
+            </div>
+            
+            @if (loading()) {
+              <div class="mt-4 flex items-center gap-2 text-sm text-slate-500">
+                <span class="w-4 h-4 border-2 border-opti-primary border-t-transparent rounded-full animate-spin"></span>
+                Chargement des concours...
+              </div>
+            }
+          </div>
+        }
+
+        <!-- STEP 2: Pièces Justificatives -->
+        @if (currentStep() === 2) {
+          <div class="flex-grow animate-fadeIn">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">Pièces Justificatives</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Téléversez les documents requis pour votre candidature (Max 10 Mo par fichier).</p>
+            
+            <div class="space-y-4">
+              <!-- CV -->
+              <div class="form-group mb-0">
+                <label class="form-label">Curriculum Vitae (CV) <span class="text-rose-500">*</span></label>
+                <div
+                  (click)="cvInput.click()"
+                  class="border-2 border-dashed rounded-2xl p-4 text-center cursor-pointer transition hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center gap-3"
+                  [class]="cvFile() ? 'border-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/20' : 'border-slate-300 dark:border-slate-600'"
+                >
+                  <input #cvInput type="file" (change)="onFileSelected($event, 'cv')" accept=".pdf" class="hidden" />
+                  <span class="text-2xl">📄</span>
+                  <div class="text-left">
+                    @if (!cvFile()) {
+                      <span class="block text-xs font-bold text-opti-primary dark:text-opti-accent">Cliquez pour importer votre CV</span>
+                      <span class="block text-[11px] text-slate-400">Format PDF uniquement</span>
+                    } @else {
+                      <span class="block text-xs font-bold text-emerald-700 dark:text-emerald-400">✓ {{ cvFileName() }}</span>
+                      <span class="block text-[11px] text-slate-500">({{ (cvFile()!.size / 1024 / 1024) | number:'1.2-2' }} Mo)</span>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <!-- Diplôme -->
+              <div class="form-group mb-0">
+                <label class="form-label">Diplôme ou Attestation <span class="text-rose-500">*</span></label>
+                <div
+                  (click)="diplomeInput.click()"
+                  class="border-2 border-dashed rounded-2xl p-4 text-center cursor-pointer transition hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center gap-3"
+                  [class]="diplomeFile() ? 'border-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/20' : 'border-slate-300 dark:border-slate-600'"
+                >
+                  <input #diplomeInput type="file" (change)="onFileSelected($event, 'diplome')" accept=".pdf,.jpg,.jpeg,.png" class="hidden" />
+                  <span class="text-2xl">🎓</span>
+                  <div class="text-left">
+                    @if (!diplomeFile()) {
+                      <span class="block text-xs font-bold text-opti-primary dark:text-opti-accent">Cliquez pour importer votre Diplôme</span>
+                      <span class="block text-[11px] text-slate-400">PDF, JPG, PNG</span>
+                    } @else {
+                      <span class="block text-xs font-bold text-emerald-700 dark:text-emerald-400">✓ {{ diplomeFileName() }}</span>
+                      <span class="block text-[11px] text-slate-500">({{ (diplomeFile()!.size / 1024 / 1024) | number:'1.2-2' }} Mo)</span>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <!-- Photo -->
+              <div class="form-group mb-0">
+                <label class="form-label">Photo d'Identité <span class="text-rose-500">*</span></label>
+                <div
+                  (click)="photoInput.click()"
+                  class="border-2 border-dashed rounded-2xl p-4 text-center cursor-pointer transition hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center gap-3"
+                  [class]="photoFile() ? 'border-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/20' : 'border-slate-300 dark:border-slate-600'"
+                >
+                  <input #photoInput type="file" (change)="onFileSelected($event, 'photo')" accept=".jpg,.jpeg,.png" class="hidden" />
+                  <span class="text-2xl">🖼️</span>
+                  <div class="text-left">
+                    @if (!photoFile()) {
+                      <span class="block text-xs font-bold text-opti-primary dark:text-opti-accent">Cliquez pour importer votre Photo</span>
+                      <span class="block text-[11px] text-slate-400">JPG, PNG (Fond clair)</span>
+                    } @else {
+                      <span class="block text-xs font-bold text-emerald-700 dark:text-emerald-400">✓ {{ photoFileName() }}</span>
+                      <span class="block text-[11px] text-slate-500">({{ (photoFile()!.size / 1024 / 1024) | number:'1.2-2' }} Mo)</span>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- STEP 3: Validation & Soumission -->
+        @if (currentStep() === 3) {
+          <div class="flex-grow animate-fadeIn">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">Validation Finale</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Vérifiez vos informations avant de soumettre définitivement votre dossier.</p>
+            
+            <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 mb-6">
+              <h4 class="font-bold text-sm text-slate-800 dark:text-slate-200 mb-3">Résumé des pièces jointes :</h4>
+              <ul class="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                <li class="flex items-center gap-2">
+                  <span class="text-emerald-500">✓</span> CV : <span class="font-semibold">{{ cvFileName() }}</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-emerald-500">✓</span> Diplôme : <span class="font-semibold">{{ diplomeFileName() }}</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-emerald-500">✓</span> Photo : <span class="font-semibold">{{ photoFileName() }}</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800/50">
+              <label class="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" required checked class="mt-0.5 rounded border-amber-300 text-amber-600 focus:ring-amber-500 dark:bg-slate-800 dark:border-amber-700" />
+                <span class="text-sm text-amber-900 dark:text-amber-200/90 font-medium leading-tight">
+                  Je certifie sur l'honneur l'exactitude des pièces et informations fournies. Je suis conscient(e) que toute fausse déclaration entraînera l'annulation de ma candidature.
+                </span>
+              </label>
+            </div>
+          </div>
+        }
+
+        <!-- Navigation Buttons -->
+        <div class="mt-8 pt-6 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+          <button type="button" 
+                  class="btn btn-outline"
+                  [disabled]="currentStep() === 1"
+                  [class.invisible]="currentStep() === 1"
+                  (click)="prevStep()">
+            &larr; Précédent
+          </button>
+
+          @if (currentStep() < totalSteps) {
+            <button type="button" 
+                    class="btn btn-primary"
+                    (click)="nextStep()">
+              Suivant &rarr;
+            </button>
+          } @else {
+            <button type="button" 
+                    class="btn btn-danger px-8 shadow-lg"
+                    [disabled]="submitting()"
+                    (click)="onSubmit()">
+              @if (submitting()) {
+                <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              }
+              {{ submitting() ? 'Traitement...' : '🚀 Soumettre ma Candidature' }}
+            </button>
+          }
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Summary Sidebar -->
+    <div>
+      @if (selectedConcours()) {
+        <div class="card p-6 sticky top-24">
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4 pb-2 border-b border-slate-100 dark:border-slate-700">
+            Concours Sélectionné
+          </h3>
+
+          <h4 class="font-bold text-opti-accent text-base mb-2">{{ selectedConcours()?.titre }}</h4>
+          <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-6">{{ selectedConcours()?.description }}</p>
+
+          <div class="space-y-3 text-sm">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-700">
+              <span class="text-slate-500 dark:text-slate-400">Places :</span>
+              <span class="font-bold text-slate-800 dark:text-slate-200">{{ selectedConcours()?.placesDisponibles }}</span>
+            </div>
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-700">
+              <span class="text-slate-500 dark:text-slate-400">Clôture :</span>
+              <span class="font-bold text-rose-600 dark:text-rose-400">{{ selectedConcours()?.dateFin | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-700">
+              <span class="text-slate-500 dark:text-slate-400">Épreuves :</span>
+              <span class="font-semibold text-slate-700 dark:text-slate-300">{{ selectedConcours()?.epreuves?.length || 0 }}</span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

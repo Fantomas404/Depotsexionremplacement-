@@ -1,0 +1,156 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+  <div class="mb-6">
+    <a routerLink="/" class="inline-flex items-center gap-2 text-sm font-semibold text-opti-primary hover:text-purple-300 transition">
+      &larr; Retour à l'accueil
+    </a>
+  </div>
+
+  @if (loading) {
+    <div class="py-16 text-center">
+      <div class="w-10 h-10 border-4 border-opti-primary border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+      <p class="text-sm text-slate-400 font-medium">Chargement des détails du concours...</p>
+    </div>
+  }
+
+  @if (error) {
+    <div class="alert alert-danger mb-6">
+      <span>⚠️</span>
+      <span>{{ error }}</span>
+    </div>
+  }
+
+  @if (!loading && concours) {
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Main Info -->
+      <div class="lg:col-span-2 space-y-6">
+        <div class="card p-6 sm:p-8">
+          <div class="flex items-center gap-3 mb-4">
+            <app-status-badge [status]="concours.statut"></app-status-badge>
+            <span class="text-xs font-mono font-bold text-slate-400 bg-white/10 px-2.5 py-1 rounded-full border border-white/10">
+              ID #{{ concours.id }}
+            </span>
+          </div>
+
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-white mb-4">
+            {{ concours.titre }}
+          </h1>
+
+          <p class="text-sm text-slate-300 leading-relaxed mb-6">
+            {{ concours.description }}
+          </p>
+
+          <!-- Conditions -->
+          <div class="p-5 bg-amber-500/10 rounded-2xl border border-amber-500/25 mb-8">
+            <h3 class="text-sm font-bold text-amber-300 mb-2 flex items-center gap-2">
+              <span>📋</span> Conditions & Critères d'Éligibilité
+            </h3>
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              {{ concours.conditions || 'Aucune condition spécifique requise pour ce concours.' }}
+            </p>
+          </div>
+
+          <!-- Épreuves -->
+          <div>
+            <div class="flex items-center justify-between gap-4 mb-4">
+              <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                <span>📚</span> Épreuves & Coefficients
+              </h3>
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-opti-primary/10 text-opti-primary border border-opti-primary/20">
+                Total Coefficients : {{ concours.totalCoefficients }}
+              </span>
+            </div>
+
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+              <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 text-slate-600 uppercase text-[11px] font-bold border-b border-slate-200">
+                  <tr>
+                    <th class="py-3 px-4">Intitulé Épreuve</th>
+                    <th class="py-3 px-4 text-center">Coefficient</th>
+                    <th class="py-3 px-4 text-center">Durée</th>
+                    <th class="py-3 px-4 text-center">Barème</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  @for (e of concours.epreuves; track e.id || e.intitule) {
+                    <tr class="hover:bg-slate-50/50">
+                      <td class="py-3.5 px-4 font-semibold text-slate-800">{{ e.intitule }}</td>
+                      <td class="py-3.5 px-4 text-center">
+                        <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
+                          x{{ e.coefficient }}
+                        </span>
+                      </td>
+                      <td class="py-3.5 px-4 text-center text-xs text-slate-600">
+                        {{ e.dureeMinutes }} min
+                      </td>
+                      <td class="py-3.5 px-4 text-center text-xs font-bold text-slate-500">
+                        / 20
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Key Info Sidebar -->
+      <div class="space-y-6">
+        <div class="card p-6 sticky top-24">
+          <h3 class="text-base font-bold text-slate-900 mb-6 pb-3 border-b border-slate-100">
+            Informations Clés
+          </h3>
+
+          <div class="space-y-4 text-sm">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <span class="text-slate-500">Places Offertes :</span>
+              <span class="font-bold text-opti-primary">{{ concours.placesDisponibles }} postes</span>
+            </div>
+
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <span class="text-slate-500">Date d'Ouverture :</span>
+              <span class="font-medium text-slate-700">{{ concours.dateDebut | date:'dd/MM/yyyy' }}</span>
+            </div>
+
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <span class="text-slate-500">Date Limite Dépôt :</span>
+              <span class="font-bold text-rose-600">{{ concours.dateFin | date:'dd/MM/yyyy' }}</span>
+            </div>
+
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <span class="text-slate-500">Délibération :</span>
+              <span class="font-medium text-slate-700">
+                {{ concours.dateDeliberation ? (concours.dateDeliberation | date:'dd/MM/yyyy') : 'Non définie' }}
+              </span>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <span class="text-slate-500">Candidatures reçues :</span>
+              <span class="font-semibold text-slate-800">{{ concours.nombreCandidats }} inscrits</span>
+            </div>
+          </div>
+
+          <div class="mt-8 pt-4 border-t border-slate-100 space-y-3">
+            @if (concours.statut === 'OUVERT') {
+              <a [routerLink]="['/candidate/postuler', concours.id]" class="btn btn-primary btn-lg w-full shadow-md">
+                ✍️ Déposer ma Candidature
+              </a>
+            } @else if (concours.statut === 'PUBLIE') {
+              <a [routerLink]="['/resultats']" [queryParams]="{ concoursId: concours.id }" class="btn btn-secondary btn-lg w-full shadow-md">
+                🏆 Consulter les Résultats
+              </a>
+            } @else if (concours.statut === 'CLOTURE') {
+              <div class="alert alert-warning text-xs text-center">
+                Les candidatures pour ce concours sont clôturées.
+              </div>
+            } @else if (concours.statut === 'EN_DELIBERATION') {
+              <div class="alert alert-warning text-xs text-center">
+                Les épreuves sont terminées. Délibération en cours.
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

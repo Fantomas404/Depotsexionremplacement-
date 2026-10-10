@@ -1,0 +1,214 @@
+<div>
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900">Délibération & Publication des Résultats</h1>
+      <p class="text-xs sm:text-sm text-slate-500 mt-1">Calcul automatisé des moyennes pondérées, arrêt des classements et publication officielle (RG-NOTE / RG-PUB).</p>
+    </div>
+  </div>
+
+  @if (successMessage) {
+    <div class="alert alert-success mb-6">
+      <span>✅</span>
+      <span>{{ successMessage }}</span>
+    </div>
+  }
+
+  @if (errorMessage) {
+    <div class="alert alert-danger mb-6">
+      <span>⚠️</span>
+      <span>{{ errorMessage }}</span>
+    </div>
+  }
+
+  <!-- Config Filter Card -->
+  <div class="card p-6 mb-8">
+    <div class="form-group mb-6">
+      <label class="form-label">Sélectionnez le concours à délibérer :</label>
+      <select [(ngModel)]="selectedConcoursId" (change)="onConcoursChange()" class="form-select">
+        @for (c of concoursList; track c.id) {
+          <option [value]="c.id">{{ c.titre }} ({{ c.statut }})</option>
+        }
+      </select>
+    </div>
+
+    <!-- Thresholds Grid -->
+    <div class="config-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+      <div class="form-group mb-0">
+        <label class="form-label">Seuil Minimal d'Admission (/20)</label>
+        <input type="number" [(ngModel)]="config.seuilAdmission" min="0" max="20" step="0.5" class="form-input" />
+        <span class="block text-[11px] text-slate-400 mt-1">Moyenne &ge; {{ config.seuilAdmission }} &rarr; Mention ADMIS</span>
+      </div>
+
+      <div class="form-group mb-0">
+        <label class="form-label">Seuil Liste d'Attente (/20)</label>
+        <input type="number" [(ngModel)]="config.seuilListeAttente" min="0" max="20" step="0.5" class="form-input" />
+        <span class="block text-[11px] text-slate-400 mt-1">Moyenne &ge; {{ config.seuilListeAttente }} &rarr; LISTE D'ATTENTE</span>
+      </div>
+
+      <div class="form-group mb-0">
+        <label class="form-label">Quota Max d'Admis (Places)</label>
+        <input type="number" [(ngModel)]="config.placesMaxAdmis" min="1" class="form-input" />
+        <span class="block text-[11px] text-slate-400 mt-1">Limiter aux N premiers classés</span>
+      </div>
+
+      <div>
+        <button (click)="calculerDeliberation()" [disabled]="calculating" class="btn btn-primary w-full shadow-sm">
+          @if (calculating) {
+            <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+          }
+          {{ calculating ? 'Calcul en cours...' : '⚡ Lancer le Calcul de Délibération' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  @if (loadingSummary) {
+    <div class="py-16 text-center">
+      <div class="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+      <p class="text-sm text-slate-500 font-medium">Chargement des résultats de délibération...</p>
+    </div>
+  }
+
+  @if (!loadingSummary && summary) {
+    <!-- Stat Indicators -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="card p-5 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 text-2xl flex items-center justify-center flex-shrink-0">
+          🏆
+        </div>
+        <div>
+          <div class="text-2xl font-black text-emerald-700">{{ summary.totalAdmis }}</div>
+          <div class="text-xs font-semibold text-slate-500">Candidats Admis</div>
+        </div>
+      </div>
+
+      <div class="card p-5 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 text-2xl flex items-center justify-center flex-shrink-0">
+          ⏳
+        </div>
+        <div>
+          <div class="text-2xl font-black text-amber-700">{{ summary.totalListeAttente }}</div>
+          <div class="text-xs font-semibold text-slate-500">Liste d'Attente</div>
+        </div>
+      </div>
+
+      <div class="card p-5 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-800 text-2xl flex items-center justify-center flex-shrink-0">
+          ✕
+        </div>
+        <div>
+          <div class="text-2xl font-black text-rose-700">{{ summary.totalRefuses }}</div>
+          <div class="text-xs font-semibold text-slate-500">Non Admis</div>
+        </div>
+      </div>
+
+      <div class="card p-5 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-800 text-2xl flex items-center justify-center flex-shrink-0">
+          📊
+        </div>
+        <div>
+          <div class="text-2xl font-black text-blue-700">{{ summary.meilleureMoyenne | number:'1.2-2' }}</div>
+          <div class="text-xs font-semibold text-slate-500">Moyenne Major (Max)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Official Publication Banner -->
+    <div
+      class="card p-6 mb-8 border-2 transition"
+      [class]="summary.estPublie ? 'bg-emerald-50/60 border-emerald-300' : 'bg-amber-50/60 border-amber-300'"
+    >
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <span
+            class="inline-block px-3 py-1 rounded-full text-xs font-bold mb-2 uppercase tracking-wider"
+            [class]="summary.estPublie ? 'bg-emerald-200 text-emerald-900' : 'bg-amber-200 text-amber-900'"
+          >
+            {{ summary.estPublie ? 'PUBLIÉ OFFICIELLEMENT' : 'EN COURS DE VALIDATION / NON PUBLIÉ' }}
+          </span>
+          <p class="text-xs sm:text-sm text-slate-700 mb-0">
+            {{ summary.estPublie ? 'Les résultats sont actuellement en ligne et consultables par tous les candidats.' : 'Les résultats sont confidentiels. Cliquez sur le bouton pour publier le PV officiel.' }}
+          </p>
+        </div>
+
+        <button
+          (click)="publierResultats()"
+          [disabled]="publishing || summary.estPublie"
+          class="btn btn-lg shadow-md flex-shrink-0"
+          [class]="summary.estPublie ? 'btn-outline border-emerald-400 text-emerald-800 bg-white' : 'btn-primary'"
+        >
+          @if (publishing) {
+            <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+          }
+          {{ summary.estPublie ? '✅ Résultats Déjà Publiés' : '🚀 Publier Officiellement les Résultats' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Rankings Table -->
+    <div class="card overflow-hidden">
+      <div class="card-header bg-slate-50/50">
+        <h3 class="font-bold text-slate-900 text-xs uppercase tracking-wider">Procès-Verbal de Classement Définitif</h3>
+        <button onclick="window.print()" class="btn btn-outline btn-sm no-print">
+          🖨️ Imprimer le PV
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 text-slate-600 uppercase text-[10px] font-bold border-b border-slate-200">
+            <tr>
+              <th class="py-3.5 px-4 w-20 text-center">Rang</th>
+              <th class="py-3.5 px-4">Candidat</th>
+              <th class="py-3.5 px-4">Détail des Notes</th>
+              <th class="py-3.5 px-4 text-center">Moyenne Pondérée</th>
+              <th class="py-3.5 px-4">Décision / Mention</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            @for (r of summary.classements; track r.id || r.candidatureId) {
+              <tr class="hover:bg-slate-50/50" [class.bg-emerald-50/30]="r.mention === 'ADMIS'">
+                <td class="py-3.5 px-4 text-center">
+                  <span
+                    class="inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-black shadow-sm"
+                    [class]="r.rang === 1 ? 'bg-amber-400 text-slate-950 font-black' : (r.rang <= 3 ? 'bg-slate-200 text-slate-800' : 'bg-slate-100 text-slate-600')"
+                  >
+                    {{ r.rang }}{{ r.rang === 1 ? 'er' : 'e' }}
+                  </span>
+                </td>
+                <td class="py-3.5 px-4">
+                  <div class="font-bold text-slate-900">{{ r.candidatNom }} {{ r.candidatPrenom }}</div>
+                  <div class="text-[11px] text-slate-400">Dossier #{{ r.candidatureId }} • {{ r.candidatEmail }}</div>
+                </td>
+                <td class="py-3.5 px-4">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    @for (n of r.notes; track n.id || n.epreuveIntitule) {
+                      <span class="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px]">
+                        {{ n.epreuveIntitule }}: <strong>{{ n.valeurNote }}</strong> (x{{ n.coefficient }})
+                      </span>
+                    }
+                  </div>
+                </td>
+                <td class="py-3.5 px-4 text-center font-mono font-bold text-sm text-opti-primary">
+                  {{ r.moyenneGenerale | number:'1.2-2' }} / 20
+                </td>
+                <td class="py-3.5 px-4">
+                  <app-status-badge [status]="r.mention" type="mention"></app-status-badge>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  } @else if (!loadingSummary && !summary && selectedConcours) {
+    <div class="card p-12 text-center max-w-lg mx-auto">
+      <div class="text-5xl mb-4">⚖️</div>
+      <h3 class="font-bold text-slate-900 text-base mb-2">Aucune délibération calculée pour ce concours</h3>
+      <p class="text-xs text-slate-500 mb-6">
+        Configurez les seuils d'admission ci-dessus et cliquez sur <strong>« Lancer le Calcul de Délibération »</strong> pour générer les moyennes et classements.
+      </p>
+    </div>
+  }
+</div>

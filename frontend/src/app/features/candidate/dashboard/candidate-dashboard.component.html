@@ -1,0 +1,108 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+  <!-- Welcome Banner -->
+  <div class="bg-gradient-to-r from-purple-950/80 via-[#181825] to-indigo-950/80 backdrop-blur-xl rounded-3xl p-6 sm:p-10 text-white shadow-glass mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden border border-white/15">
+    <div class="absolute -top-10 -left-10 w-48 h-48 bg-opti-primary/20 blur-3xl rounded-full pointer-events-none"></div>
+    <div class="relative z-10 max-w-2xl">
+      <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mb-2">
+        Bonjour, {{ authService.currentUser()?.prenom }} {{ authService.currentUser()?.nom }} 👋
+      </h1>
+      <p class="text-sm sm:text-base text-slate-300 leading-relaxed">
+        Bienvenue sur votre espace candidat. Suivez l'avancement de vos dossiers en temps réel et accédez à vos relevés de notes certifiés.
+      </p>
+    </div>
+    <div class="relative z-10">
+      <a routerLink="/concours" class="btn btn-primary btn-lg shadow-lg shadow-opti-primary/25">
+        ➕ Postuler à un Concours
+      </a>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="py-16 text-center">
+      <div class="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+      <p class="text-sm text-slate-500 font-medium">Chargement de vos candidatures...</p>
+    </div>
+  } @else {
+    @if (candidatures.length === 0) {
+      <div class="card p-12 text-center max-w-lg mx-auto">
+        <div class="text-5xl mb-4">📝</div>
+        <h3 class="text-lg font-bold text-slate-900 mb-2">Aucune candidature déposée pour l'instant</h3>
+        <p class="text-xs sm:text-sm text-slate-500 mb-6">Vous n'avez pas encore postulé à un concours ouvert.</p>
+        <a routerLink="/concours" class="btn btn-primary">
+          Explorer les concours ouverts
+        </a>
+      </div>
+    } @else {
+      <div>
+        <h2 class="text-xl font-extrabold text-slate-900 mb-6">
+          Mes Candidatures Enregistrées ({{ candidatures.length }})
+        </h2>
+
+        <div class="space-y-4">
+          @for (cand of candidatures; track cand.id) {
+            <div class="card card-hover overflow-hidden">
+              <div class="p-6">
+                <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
+                  <div>
+                    <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-slate-100 text-slate-700 mb-2">
+                      Dossier #{{ cand.id }}
+                    </span>
+                    <h3 class="text-lg font-bold text-slate-900">
+                      {{ cand.concoursTitre }}
+                    </h3>
+                    <span class="text-xs text-slate-500 flex items-center gap-1 mt-1">
+                      📅 Déposé le {{ cand.dateSoumission | date:'dd/MM/yyyy HH:mm' }}
+                    </span>
+                  </div>
+
+                  <div>
+                    <app-status-badge [status]="cand.statut" type="candidature"></app-status-badge>
+                  </div>
+                </div>
+
+                @if (cand.statut === 'REJETE') {
+                  <div class="alert alert-danger my-4 text-xs">
+                    <span>❌</span>
+                    <div>
+                      <strong>Motif du rejet :</strong> {{ cand.motifRejet || 'Dossier incomplet ou critères non satisfaits.' }}
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <!-- Footer with Documents and Actions -->
+              <div class="px-6 py-4 bg-slate-50/80 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <!-- Attachments -->
+                <div class="flex items-center gap-3 text-xs flex-wrap">
+                  <span class="font-bold text-slate-500">Pièces jointes :</span>
+                  <a [href]="'http://localhost:8080' + cand.cvUrl" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-opti-primary hover:border-opti-primary transition font-medium">
+                    📄 CV
+                  </a>
+                  <a [href]="'http://localhost:8080' + cand.diplomeUrl" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-opti-primary hover:border-opti-primary transition font-medium">
+                    🎓 Diplôme
+                  </a>
+                  <a [href]="'http://localhost:8080' + cand.photoUrl" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-opti-primary hover:border-opti-primary transition font-medium">
+                    🖼️ Photo
+                  </a>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-center gap-2 self-end md:self-auto">
+                  <a [routerLink]="['/candidate/suivi', cand.id]" class="btn btn-outline btn-sm">
+                    🔍 Suivi Détaillé du Dossier
+                  </a>
+
+                  @if (cand.resultat && cand.resultat.estPublie) {
+                    <a [routerLink]="['/candidate/releve', cand.id]" class="btn btn-primary btn-sm shadow-sm">
+                      🏆 Voir mon Relevé de Notes
+                    </a>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  }
+</div>

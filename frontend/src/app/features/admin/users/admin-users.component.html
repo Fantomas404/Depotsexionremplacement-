@@ -1,0 +1,189 @@
+<div>
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900">Gestion des Utilisateurs & Comptes</h1>
+      <p class="text-xs sm:text-sm text-slate-500 mt-1">Créez, modifiez, filtrez et gérez les comptes administrateurs et candidats de OptiConcours.</p>
+    </div>
+    <button (click)="openCreateModal()" class="btn btn-primary shadow-sm">
+      ➕ Créer un Utilisateur / Admin
+    </button>
+  </div>
+
+  @if (successMessage) {
+    <div class="alert alert-success mb-6">
+      <span>✅</span>
+      <span>{{ successMessage }}</span>
+    </div>
+  }
+
+  @if (errorMessage) {
+    <div class="alert alert-danger mb-6">
+      <span>⚠️</span>
+      <span>{{ errorMessage }}</span>
+    </div>
+  }
+
+  <!-- Filters -->
+  <div class="card p-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="form-group mb-0">
+        <label class="form-label">Rechercher (Nom, Prénom, Email, Tél)</label>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (input)="filterUsers()"
+          placeholder="Rechercher par mot-clé..."
+          class="form-input"
+        />
+      </div>
+
+      <div class="form-group mb-0">
+        <label class="form-label">Filtrer par Rôle</label>
+        <select [(ngModel)]="selectedRole" (change)="loadUsers()" class="form-select">
+          <option value="">Tous les rôles confondus</option>
+          <option value="ROLE_ADMIN">🛡️ Uniquement les Administrateurs</option>
+          <option value="ROLE_CANDIDAT">👤 Uniquement les Candidats</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="py-16 text-center">
+      <div class="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+      <p class="text-sm text-slate-500 font-medium">Chargement des comptes utilisateurs...</p>
+    </div>
+  } @else {
+    <div class="card overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 text-slate-600 uppercase text-[10px] font-bold border-b border-slate-200">
+            <tr>
+              <th class="py-3.5 px-4 w-16">ID</th>
+              <th class="py-3.5 px-4">Nom & Prénom</th>
+              <th class="py-3.5 px-4">Email</th>
+              <th class="py-3.5 px-4">Téléphone</th>
+              <th class="py-3.5 px-4">Rôle</th>
+              <th class="py-3.5 px-4">Date Inscription</th>
+              <th class="py-3.5 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            @for (u of filteredUsers; track u.id) {
+              <tr class="hover:bg-slate-50/50">
+                <td class="py-3.5 px-4 font-mono font-bold text-slate-400">#{{ u.id }}</td>
+                <td class="py-3.5 px-4 font-bold text-slate-900">{{ u.nom }} {{ u.prenom }}</td>
+                <td class="py-3.5 px-4 text-slate-600">{{ u.email }}</td>
+                <td class="py-3.5 px-4 text-slate-600">{{ u.telephone || 'Non renseigné' }}</td>
+                <td class="py-3.5 px-4">
+                  <span
+                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border"
+                    [class]="u.role === 'ROLE_ADMIN' ? 'bg-amber-50 text-amber-900 border-amber-300' : 'bg-slate-100 text-slate-700 border-slate-200'"
+                  >
+                    {{ u.role === 'ROLE_ADMIN' ? '🛡️ ADMINISTRATEUR' : '👤 CANDIDAT' }}
+                  </span>
+                </td>
+                <td class="py-3.5 px-4 text-slate-500">{{ u.createdAt | date:'dd/MM/yyyy' }}</td>
+                <td class="py-3.5 px-4 text-right">
+                  <div class="flex items-center justify-end gap-2">
+                    <button (click)="openEditModal(u)" class="btn btn-outline btn-sm" title="Modifier cet utilisateur">
+                      ✏️ Modifier
+                    </button>
+                    <button (click)="deleteUser(u)" class="btn btn-danger btn-sm" title="Supprimer cet utilisateur">
+                      🗑️
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="py-12 text-center text-slate-500 text-sm">
+                  Aucun utilisateur trouvé correspondant à vos critères de recherche.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- Create / Edit User Modal -->
+  @if (showModal) {
+    <div class="modal-backdrop">
+      <div class="modal-content max-w-lg">
+        <div class="card-header bg-slate-50/50">
+          <h3 class="font-bold text-slate-900 text-base">
+            {{ editMode ? 'Modifier l\'Utilisateur #' + currentUserId : 'Créer un Nouvel Utilisateur' }}
+          </h3>
+          <button (click)="closeModal()" class="btn btn-outline btn-sm p-1.5 leading-none">✕</button>
+        </div>
+
+        <div class="p-6">
+          @if (errorMessage) {
+            <div class="alert alert-danger mb-4 text-xs">
+              <span>⚠️</span>
+              <span>{{ errorMessage }}</span>
+            </div>
+          }
+
+          <form (ngSubmit)="saveUser()" class="space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+              <div class="form-group mb-0">
+                <label class="form-label">Nom <span class="text-rose-500">*</span></label>
+                <input type="text" [(ngModel)]="form.nom" name="nom" required class="form-input" placeholder="ex: FALL" />
+              </div>
+              <div class="form-group mb-0">
+                <label class="form-label">Prénom <span class="text-rose-500">*</span></label>
+                <input type="text" [(ngModel)]="form.prenom" name="prenom" required class="form-input" placeholder="ex: Moussa" />
+              </div>
+            </div>
+
+            <div class="form-group mb-0">
+              <label class="form-label">Adresse Email <span class="text-rose-500">*</span></label>
+              <input type="email" [(ngModel)]="form.email" name="email" required class="form-input" placeholder="utilisateur@OptiConcours.sn" />
+            </div>
+
+            <div class="form-group mb-0">
+              <label class="form-label">Numéro de Téléphone</label>
+              <input type="tel" [(ngModel)]="form.telephone" name="telephone" class="form-input" placeholder="ex: 771234567" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="form-group mb-0">
+                <label class="form-label">
+                  {{ editMode ? 'Nouveau mot de passe' : 'Mot de passe' }}
+                  <span *ngIf="!editMode" class="text-rose-500">*</span>
+                </label>
+                <input
+                  type="password"
+                  [(ngModel)]="form.password"
+                  name="password"
+                  [required]="!editMode"
+                  placeholder="••••••••"
+                  class="form-input"
+                />
+              </div>
+
+              <div class="form-group mb-0">
+                <label class="form-label">Rôle Attribué <span class="text-rose-500">*</span></label>
+                <select [(ngModel)]="form.role" name="role" required class="form-select">
+                  <option value="ROLE_ADMIN">🛡️ ADMINISTRATEUR</option>
+                  <option value="ROLE_CANDIDAT">👤 CANDIDAT</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+              <button (click)="closeModal()" type="button" class="btn btn-outline">Annuler</button>
+              <button type="submit" [disabled]="saving" class="btn btn-primary">
+                {{ saving ? 'Enregistrement...' : (editMode ? 'Mettre à jour' : 'Créer l\'utilisateur') }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+</div>

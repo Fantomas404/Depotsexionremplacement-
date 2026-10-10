@@ -1,0 +1,66 @@
+<div class="min-h-[calc(100vh-10rem)] flex items-center justify-center py-16 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+  <!-- Glowing Background Mesh -->
+  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-tr from-opti-primary/20 to-opti-accent/20 blur-[120px] rounded-full pointer-events-none -z-10"></div>
+
+  <div class="max-w-md w-full card p-8 sm:p-10 shadow-2xl border-white/15 bg-[#181825]/75 backdrop-blur-2xl">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-opti-primary to-opti-accent text-[#1e1e2e] font-black text-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-opti-primary/25">
+        SX
+      </div>
+      <h2 class="text-2xl font-black text-white tracking-tight">Connexion à OptiConcours</h2>
+      <p class="text-xs text-slate-400 mt-1">Accédez à votre espace candidat ou backoffice administration</p>
+    </div>
+
+    @if (errorMessage) {
+      <div class="alert alert-danger mb-6">
+        <span>⚠️</span>
+        <span>{{ errorMessage }}</span>
+      </div>
+    }
+
+    <form (ngSubmit)="onSubmit()" class="space-y-4">
+      <div class="form-group">
+        <label class="form-label">
+          Adresse Email ou Téléphone <span class="text-rose-400">*</span>
+        </label>
+        <input
+          type="text"
+          [(ngModel)]="credentials.email"
+          name="email"
+          required
+          placeholder="ex: candidat@OptiConcours.sn ou 771234567"
+          class="form-input"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">
+          Mot de passe <span class="text-rose-400">*</span>
+        </label>
+        <input
+          type="password"
+          [(ngModel)]="credentials.password"
+          name="password"
+          required
+          placeholder="••••••••"
+          class="form-input"
+        />
+      </div>
+
+      <button type="submit" [disabled]="loading" class="btn btn-primary btn-lg w-full mt-2 shadow-lg shadow-opti-primary/25">
+        @if (loading) {
+          <span class="w-4 h-4 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></span>
+        }
+        {{ loading ? 'Connexion en cours...' : 'Se connecter' }}
+      </button>
+    </form>
+
+    <div class="mt-8 pt-6 border-t border-white/10 text-center text-xs text-slate-400">
+      <span>Pas encore de compte ?</span>
+      <a routerLink="/auth/register" class="font-bold text-opti-primary hover:text-purple-300 transition-colors ml-1">
+        Créer un compte candidat
+      </a>
+    </div>
+  </div>
+</div>

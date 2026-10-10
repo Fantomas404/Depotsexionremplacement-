@@ -1,0 +1,188 @@
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+  <div class="mb-6">
+    <a routerLink="/candidate/dashboard" class="inline-flex items-center gap-2 text-sm font-semibold text-opti-primary hover:text-emerald-800 transition">
+      &larr; Retour à mon tableau de bord
+    </a>
+  </div>
+
+  @if (loading) {
+    <div class="py-16 text-center">
+      <div class="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+      <p class="text-sm text-slate-500 font-medium">Chargement du suivi de votre dossier...</p>
+    </div>
+  }
+
+  @if (!loading && error) {
+    <div class="alert alert-danger mb-6">
+      <span>⚠️</span>
+      <span>{{ error }}</span>
+    </div>
+  }
+
+  @if (!loading && candidature) {
+    <div class="space-y-6">
+      <!-- Overview Card -->
+      <div class="card p-6 sm:p-8">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <span class="inline-block px-3 py-1 rounded-full text-xs font-mono font-bold bg-slate-100 text-slate-700">
+            Dossier N° #{{ candidature.id }}
+          </span>
+          <app-status-badge [status]="candidature.statut" type="candidature"></app-status-badge>
+        </div>
+
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-2">
+          {{ candidature.concoursTitre }}
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-500">
+          Déposé le {{ candidature.dateSoumission | date:'dd/MM/yyyy à HH:mm' }}
+        </p>
+
+        @if (candidature.statut === 'REJETE') {
+          <div class="alert alert-danger mt-6">
+            <span>❌</span>
+            <div>
+              <h4 class="font-bold text-sm text-rose-900 mb-1">Dossier Rejeté</h4>
+              <p class="text-xs text-rose-800">
+                <strong>Motif notifié par la commission :</strong> {{ candidature.motifRejet || 'Pièces justificatives non conformes aux critères du concours.' }}
+              </p>
+            </div>
+          </div>
+        }
+
+        @if (candidature.resultat && candidature.resultat.estPublie) {
+          <div class="alert alert-success mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <span class="text-2xl">🎉</span>
+              <div>
+                <h4 class="font-bold text-sm text-emerald-900 mb-0.5">Les Résultats Officiels sont Publiés !</h4>
+                <p class="text-xs text-emerald-800 mb-0">
+                  Votre décision : <strong>{{ candidature.resultat.mention }}</strong> (Moyenne : {{ candidature.resultat.moyenneGenerale | number:'1.2-2' }}/20 - Rang : {{ candidature.resultat.rang }}e)
+                </p>
+              </div>
+            </div>
+            <a [routerLink]="['/candidate/releve', candidature.id]" class="btn btn-primary btn-sm shadow-sm flex-shrink-0">
+              📄 Voir mon Relevé Officiel
+            </a>
+          </div>
+        }
+      </div>
+
+      <!-- Timeline Card -->
+      <div class="card p-6 sm:p-8">
+        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-8">
+          Progression & Étapes du Concours
+        </h3>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 relative">
+          <!-- Step 1 -->
+          <div class="text-center p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
+            <div class="w-8 h-8 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center mx-auto mb-2 shadow-sm">
+              ✓
+            </div>
+            <span class="block text-xs font-bold text-slate-900">Dossier Soumis</span>
+            <span class="block text-[11px] text-emerald-700 mt-1">{{ candidature.dateSoumission | date:'dd/MM/yyyy' }}</span>
+          </div>
+
+          <!-- Step 2 -->
+          <div
+            class="text-center p-4 rounded-2xl border"
+            [class]="candidature.statut === 'REJETE' ? 'bg-rose-50 border-rose-200' : (stepIndex >= 2 ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200')"
+          >
+            <div
+              class="w-8 h-8 rounded-full font-bold text-xs flex items-center justify-center mx-auto mb-2 shadow-sm"
+              [class]="candidature.statut === 'REJETE' ? 'bg-rose-600 text-white' : (stepIndex >= 2 ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700')"
+            >
+              {{ candidature.statut === 'REJETE' ? '✕' : (stepIndex >= 2 ? '✓' : '2') }}
+            </div>
+            <span class="block text-xs font-bold text-slate-900">Vérification</span>
+            <span class="block text-[11px] text-slate-500 mt-1">
+              {{ candidature.statut === 'REJETE' ? 'Rejeté' : (stepIndex >= 2 ? 'Validé' : 'En cours') }}
+            </span>
+          </div>
+
+          <!-- Step 3 -->
+          <div
+            class="text-center p-4 rounded-2xl border"
+            [class]="stepIndex >= 3 ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200'"
+          >
+            <div
+              class="w-8 h-8 rounded-full font-bold text-xs flex items-center justify-center mx-auto mb-2 shadow-sm"
+              [class]="stepIndex >= 3 ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'"
+            >
+              {{ stepIndex >= 3 ? '✓' : '3' }}
+            </div>
+            <span class="block text-xs font-bold text-slate-900">Épreuves & Saisie</span>
+            <span class="block text-[11px] text-slate-500 mt-1">
+              {{ stepIndex >= 3 ? 'Notes saisies' : 'À venir' }}
+            </span>
+          </div>
+
+          <!-- Step 4 -->
+          <div
+            class="text-center p-4 rounded-2xl border"
+            [class]="candidature.resultat?.estPublie ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200'"
+          >
+            <div
+              class="w-8 h-8 rounded-full font-bold text-xs flex items-center justify-center mx-auto mb-2 shadow-sm"
+              [class]="candidature.resultat?.estPublie ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'"
+            >
+              {{ candidature.resultat?.estPublie ? '🏆' : '4' }}
+            </div>
+            <span class="block text-xs font-bold text-slate-900">Délibération</span>
+            <span class="block text-[11px] text-slate-500 mt-1">
+              {{ candidature.resultat?.estPublie ? 'Résultats Publiés' : 'En attente' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Attachments Card -->
+      <div class="card p-6 sm:p-8">
+        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6">
+          Pièces Justificatives Déposées
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
+            <div class="flex items-center gap-3 mb-4">
+              <span class="text-3xl">📄</span>
+              <div>
+                <div class="font-bold text-xs text-slate-900">Curriculum Vitae</div>
+                <div class="text-[11px] text-slate-500">Format PDF vérifié</div>
+              </div>
+            </div>
+            <a [href]="'http://localhost:8080' + candidature.cvUrl" target="_blank" class="btn btn-outline btn-sm w-full">
+              Visualiser le CV
+            </a>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
+            <div class="flex items-center gap-3 mb-4">
+              <span class="text-3xl">🎓</span>
+              <div>
+                <div class="font-bold text-xs text-slate-900">Diplôme Requis</div>
+                <div class="text-[11px] text-slate-500">Attestation d'études</div>
+              </div>
+            </div>
+            <a [href]="'http://localhost:8080' + candidature.diplomeUrl" target="_blank" class="btn btn-outline btn-sm w-full">
+              Visualiser le Diplôme
+            </a>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
+            <div class="flex items-center gap-3 mb-4">
+              <span class="text-3xl">🖼️</span>
+              <div>
+                <div class="font-bold text-xs text-slate-900">Photo d'Identité</div>
+                <div class="text-[11px] text-slate-500">Photographie officielle</div>
+              </div>
+            </div>
+            <a [href]="'http://localhost:8080' + candidature.photoUrl" target="_blank" class="btn btn-outline btn-sm w-full">
+              Visualiser la Photo
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
